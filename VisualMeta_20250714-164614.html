@@ -1,0 +1,801 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        
+            <script>function neighbourhoodHighlight(params) {
+  // console.log("in nieghbourhoodhighlight");
+  allNodes = nodes.get({ returnType: "Object" });
+  // originalNodes = JSON.parse(JSON.stringify(allNodes));
+  // if something is selected:
+  if (params.nodes.length > 0) {
+    highlightActive = true;
+    var i, j;
+    var selectedNode = params.nodes[0];
+    var degrees = 2;
+
+    // mark all nodes as hard to read.
+    for (let nodeId in allNodes) {
+      // nodeColors[nodeId] = allNodes[nodeId].color;
+      allNodes[nodeId].color = "rgba(200,200,200,0.5)";
+      if (allNodes[nodeId].hiddenLabel === undefined) {
+        allNodes[nodeId].hiddenLabel = allNodes[nodeId].label;
+        allNodes[nodeId].label = undefined;
+      }
+    }
+    var connectedNodes = network.getConnectedNodes(selectedNode);
+    var allConnectedNodes = [];
+
+    // get the second degree nodes
+    for (i = 1; i < degrees; i++) {
+      for (j = 0; j < connectedNodes.length; j++) {
+        allConnectedNodes = allConnectedNodes.concat(
+          network.getConnectedNodes(connectedNodes[j])
+        );
+      }
+    }
+
+    // all second degree nodes get a different color and their label back
+    for (i = 0; i < allConnectedNodes.length; i++) {
+      // allNodes[allConnectedNodes[i]].color = "pink";
+      allNodes[allConnectedNodes[i]].color = "rgba(150,150,150,0.75)";
+      if (allNodes[allConnectedNodes[i]].hiddenLabel !== undefined) {
+        allNodes[allConnectedNodes[i]].label =
+          allNodes[allConnectedNodes[i]].hiddenLabel;
+        allNodes[allConnectedNodes[i]].hiddenLabel = undefined;
+      }
+    }
+
+    // all first degree nodes get their own color and their label back
+    for (i = 0; i < connectedNodes.length; i++) {
+      // allNodes[connectedNodes[i]].color = undefined;
+      allNodes[connectedNodes[i]].color = nodeColors[connectedNodes[i]];
+      if (allNodes[connectedNodes[i]].hiddenLabel !== undefined) {
+        allNodes[connectedNodes[i]].label =
+          allNodes[connectedNodes[i]].hiddenLabel;
+        allNodes[connectedNodes[i]].hiddenLabel = undefined;
+      }
+    }
+
+    // the main node gets its own color and its label back.
+    // allNodes[selectedNode].color = undefined;
+    allNodes[selectedNode].color = nodeColors[selectedNode];
+    if (allNodes[selectedNode].hiddenLabel !== undefined) {
+      allNodes[selectedNode].label = allNodes[selectedNode].hiddenLabel;
+      allNodes[selectedNode].hiddenLabel = undefined;
+    }
+  } else if (highlightActive === true) {
+    // console.log("highlightActive was true");
+    // reset all nodes
+    for (let nodeId in allNodes) {
+      // allNodes[nodeId].color = "purple";
+      allNodes[nodeId].color = nodeColors[nodeId];
+      // delete allNodes[nodeId].color;
+      if (allNodes[nodeId].hiddenLabel !== undefined) {
+        allNodes[nodeId].label = allNodes[nodeId].hiddenLabel;
+        allNodes[nodeId].hiddenLabel = undefined;
+      }
+    }
+    highlightActive = false;
+  }
+
+  // transform the object into an array
+  var updateArray = [];
+  if (params.nodes.length > 0) {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        // console.log(allNodes[nodeId]);
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  } else {
+    // console.log("Nothing was selected");
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        // console.log(allNodes[nodeId]);
+        // allNodes[nodeId].color = {};
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  }
+}
+
+function filterHighlight(params) {
+  allNodes = nodes.get({ returnType: "Object" });
+  // if something is selected:
+  if (params.nodes.length > 0) {
+    filterActive = true;
+    let selectedNodes = params.nodes;
+
+    // hiding all nodes and saving the label
+    for (let nodeId in allNodes) {
+      allNodes[nodeId].hidden = true;
+      if (allNodes[nodeId].savedLabel === undefined) {
+        allNodes[nodeId].savedLabel = allNodes[nodeId].label;
+        allNodes[nodeId].label = undefined;
+      }
+    }
+
+    for (let i=0; i < selectedNodes.length; i++) {
+      allNodes[selectedNodes[i]].hidden = false;
+      if (allNodes[selectedNodes[i]].savedLabel !== undefined) {
+        allNodes[selectedNodes[i]].label = allNodes[selectedNodes[i]].savedLabel;
+        allNodes[selectedNodes[i]].savedLabel = undefined;
+      }
+    }
+
+  } else if (filterActive === true) {
+    // reset all nodes
+    for (let nodeId in allNodes) {
+      allNodes[nodeId].hidden = false;
+      if (allNodes[nodeId].savedLabel !== undefined) {
+        allNodes[nodeId].label = allNodes[nodeId].savedLabel;
+        allNodes[nodeId].savedLabel = undefined;
+      }
+    }
+    filterActive = false;
+  }
+
+  // transform the object into an array
+  var updateArray = [];
+  if (params.nodes.length > 0) {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  } else {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  }
+}
+
+function selectNode(nodes) {
+  network.selectNodes(nodes);
+  neighbourhoodHighlight({ nodes: nodes });
+  return nodes;
+}
+
+function selectNodes(nodes) {
+  network.selectNodes(nodes);
+  filterHighlight({nodes: nodes});
+  return nodes;
+}
+
+function highlightFilter(filter) {
+  let selectedNodes = []
+  let selectedProp = filter['property']
+  if (filter['item'] === 'node') {
+    let allNodes = nodes.get({ returnType: "Object" });
+    for (let nodeId in allNodes) {
+      if (allNodes[nodeId][selectedProp] && filter['value'].includes((allNodes[nodeId][selectedProp]).toString())) {
+        selectedNodes.push(nodeId)
+      }
+    }
+  }
+  else if (filter['item'] === 'edge'){
+    let allEdges = edges.get({returnType: 'object'});
+    // check if the selected property exists for selected edge and select the nodes connected to the edge
+    for (let edge in allEdges) {
+      if (allEdges[edge][selectedProp] && filter['value'].includes((allEdges[edge][selectedProp]).toString())) {
+        selectedNodes.push(allEdges[edge]['from'])
+        selectedNodes.push(allEdges[edge]['to'])
+      }
+    }
+  }
+  selectNodes(selectedNodes)
+}</script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css" integrity="sha512-WgxfT5LWjfszlPHXRmBWHkV2eceiWTOBvrKCNbdgDYTHrT2AeLCGbF4sZlZw3UMN3WtL0tGUoIAKsu8mllg/XA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js" integrity="sha512-LnvoEWDFrqGHlHmDD2101OrLcbsfkrzoSpvtSQtxK3RMnRV0eOkhhBN2dXHKRrUU8p2DGRTk35n4O8nWSVe1mQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+            
+            
+            
+            
+            
+
+        
+<center>
+<h1></h1>
+</center>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
+          crossorigin="anonymous"
+        />
+        <script
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+          crossorigin="anonymous"
+        ></script>
+
+
+        <center>
+          <h1></h1>
+        </center>
+        <style type="text/css">
+
+             #mynetwork {
+                 width: 100%;
+                 height: 800px;
+                 background-color: #ffffff;
+                 border: 1px solid lightgray;
+                 position: relative;
+                 float: left;
+             }
+
+             
+
+             
+
+             
+        </style>
+    </head>
+
+
+    <body>
+        <div class="card" style="width: 100%">
+            
+            
+            <div id="mynetwork" class="card-body"></div>
+        </div>
+
+        
+        
+
+        <script type="text/javascript">
+
+              // initialize global variables.
+              var edges;
+              var nodes;
+              var allNodes;
+              var allEdges;
+              var nodeColors;
+              var originalNodes;
+              var network;
+              var container;
+              var options, data;
+              var filter = {
+                  item : '',
+                  property : '',
+                  value : []
+              };
+
+              
+
+              
+
+              // This method is responsible for drawing the graph, returns the drawn network
+              function drawGraph() {
+                  var container = document.getElementById('mynetwork');
+
+                  
+
+                  // parsing and collecting nodes and edges from the python
+                  nodes = new vis.DataSet([{"column": "Sex", "count": 113, "group": 0, "id": "Sex:Sex:None", "label": "Sex:None", "level": 0, "levelPct": 74.3421052631579, "name": "Sex:None", "shape": "dot", "size": 50, "title": "Sex:None\nCount: 113\nLevel %: 74.3%\nLevel: 1", "value": 113}, {"column": "MainGroup", "count": 41, "group": 1, "id": "MainGroup:Parkinson", "label": "Parkinson", "level": 1, "levelPct": 26.973684210526315, "name": "Parkinson", "shape": "dot", "size": 38, "title": "Parkinson\nCount: 41\nLevel %: 27.0%\nLevel: 2", "value": 41}, {"column": "MainGroup", "count": 59, "group": 1, "id": "MainGroup:Trauma", "label": "Trauma", "level": 1, "levelPct": 38.81578947368421, "name": "Trauma", "shape": "dot", "size": 42, "title": "Trauma\nCount: 59\nLevel %: 38.8%\nLevel: 2", "value": 59}, {"column": "MainGroup", "count": 32, "group": 1, "id": "MainGroup:Wildtype", "label": "Wildtype", "level": 1, "levelPct": 21.052631578947366, "name": "Wildtype", "shape": "dot", "size": 35, "title": "Wildtype\nCount: 32\nLevel %: 21.1%\nLevel: 2", "value": 32}, {"column": "Sex", "count": 36, "group": 0, "id": "Sex:M", "label": "M", "level": 0, "levelPct": 23.684210526315788, "name": "M", "shape": "dot", "size": 36, "title": "M\nCount: 36\nLevel %: 23.7%\nLevel: 1", "value": 36}, {"column": "MainGroup", "count": 13, "group": 1, "id": "MainGroup:Dystonia", "label": "Dystonia", "level": 1, "levelPct": 8.552631578947368, "name": "Dystonia", "shape": "dot", "size": 24, "title": "Dystonia\nCount: 13\nLevel %: 8.6%\nLevel: 2", "value": 13}, {"column": "MainGroup", "count": 7, "group": 1, "id": "MainGroup:HSP-SPG", "label": "HSP-SPG", "level": 1, "levelPct": 4.605263157894736, "name": "HSP-SPG", "shape": "dot", "size": 18, "title": "HSP-SPG\nCount: 7\nLevel %: 4.6%\nLevel: 2", "value": 7}, {"column": "Sex", "count": 3, "group": 0, "id": "Sex:F", "label": "F", "level": 0, "levelPct": 1.9736842105263157, "name": "F", "shape": "dot", "size": 10, "title": "F\nCount: 3\nLevel %: 2.0%\nLevel: 1", "value": 3}, {"column": "Subtype-MolecularSubtype", "count": 73, "group": 2, "id": "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None", "label": "Subtype-MolecularSub...", "level": 2, "levelPct": 48.026315789473685, "name": "Subtype-MolecularSubtype:None", "shape": "dot", "size": 44, "title": "Subtype-MolecularSubtype:None\nCount: 73\nLevel %: 48.0%\nLevel: 3", "value": 73}, {"column": "Subtype-MolecularSubtype", "count": 10, "group": 2, "id": "Subtype-MolecularSubtype:DYT1-GAG3", "label": "DYT1-GAG3", "level": 2, "levelPct": 6.578947368421052, "name": "DYT1-GAG3", "shape": "dot", "size": 22, "title": "DYT1-GAG3\nCount: 10\nLevel %: 6.6%\nLevel: 3", "value": 10}, {"column": "Subtype-MolecularSubtype", "count": 3, "group": 2, "id": "Subtype-MolecularSubtype:DYT1-KI", "label": "DYT1-KI", "level": 2, "levelPct": 1.9736842105263157, "name": "DYT1-KI", "shape": "dot", "size": 10, "title": "DYT1-KI\nCount: 3\nLevel %: 2.0%\nLevel: 3", "value": 3}, {"column": "Subtype-MolecularSubtype", "count": 41, "group": 2, "id": "Subtype-MolecularSubtype:A53T", "label": "A53T", "level": 2, "levelPct": 26.973684210526315, "name": "A53T", "shape": "dot", "size": 38, "title": "A53T\nCount: 41\nLevel %: 27.0%\nLevel: 3", "value": 41}, {"column": "Subtype-MolecularSubtype", "count": 25, "group": 2, "id": "Subtype-MolecularSubtype:EV", "label": "EV", "level": 2, "levelPct": 16.447368421052634, "name": "EV", "shape": "dot", "size": 32, "title": "EV\nCount: 25\nLevel %: 16.4%\nLevel: 3", "value": 25}]);
+                  edges = new vis.DataSet([{"color": "#4A90E2", "flow": 34, "from": "Sex:Sex:None", "label": "", "title": "Flow: 34 records", "to": "MainGroup:Parkinson", "value": 34, "weight": 34, "width": 2.504424778761062}, {"color": "#4A90E2", "flow": 59, "from": "Sex:Sex:None", "label": "", "title": "Flow: 59 records", "to": "MainGroup:Trauma", "value": 59, "weight": 59, "width": 3.6106194690265485}, {"color": "#4A90E2", "flow": 20, "from": "Sex:Sex:None", "label": "", "title": "Flow: 20 records", "to": "MainGroup:Wildtype", "value": 20, "weight": 20, "width": 1.8849557522123894}, {"color": "#4A90E2", "flow": 13, "from": "Sex:M", "label": "", "title": "Flow: 13 records", "to": "MainGroup:Dystonia", "value": 13, "weight": 13, "width": 1.575221238938053}, {"color": "#4A90E2", "flow": 4, "from": "Sex:M", "label": "", "title": "Flow: 4 records", "to": "MainGroup:HSP-SPG", "value": 4, "weight": 4, "width": 1.176991150442478}, {"color": "#4A90E2", "flow": 7, "from": "Sex:M", "label": "", "title": "Flow: 7 records", "to": "MainGroup:Parkinson", "value": 7, "weight": 7, "width": 1.3097345132743363}, {"color": "#4A90E2", "flow": 12, "from": "Sex:M", "label": "", "title": "Flow: 12 records", "to": "MainGroup:Wildtype", "value": 12, "weight": 12, "width": 1.5309734513274336}, {"color": "#4A90E2", "flow": 3, "from": "Sex:F", "label": "", "title": "Flow: 3 records", "to": "MainGroup:HSP-SPG", "value": 3, "weight": 3, "width": 1.1327433628318584}, {"color": "#4A90E2", "flow": 7, "from": "MainGroup:HSP-SPG", "label": "", "title": "Flow: 7 records", "to": "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None", "value": 7, "weight": 7, "width": 1.3097345132743363}, {"color": "#4A90E2", "flow": 10, "from": "MainGroup:Dystonia", "label": "", "title": "Flow: 10 records", "to": "Subtype-MolecularSubtype:DYT1-GAG3", "value": 10, "weight": 10, "width": 1.4424778761061947}, {"color": "#4A90E2", "flow": 3, "from": "MainGroup:Dystonia", "label": "", "title": "Flow: 3 records", "to": "Subtype-MolecularSubtype:DYT1-KI", "value": 3, "weight": 3, "width": 1.1327433628318584}, {"color": "#4A90E2", "flow": 41, "from": "MainGroup:Parkinson", "label": "", "title": "Flow: 41 records", "to": "Subtype-MolecularSubtype:A53T", "value": 41, "weight": 41, "width": 2.814159292035398}, {"color": "#4A90E2", "flow": 25, "from": "MainGroup:Wildtype", "label": "", "title": "Flow: 25 records", "to": "Subtype-MolecularSubtype:EV", "value": 25, "weight": 25, "width": 2.106194690265487}, {"color": "#4A90E2", "flow": 7, "from": "MainGroup:Wildtype", "label": "", "title": "Flow: 7 records", "to": "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None", "value": 7, "weight": 7, "width": 1.3097345132743363}, {"color": "#4A90E2", "flow": 59, "from": "MainGroup:Trauma", "label": "", "title": "Flow: 59 records", "to": "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None", "value": 59, "weight": 59, "width": 3.6106194690265485}]);
+
+                  nodeColors = {};
+                  allNodes = nodes.get({ returnType: "Object" });
+                  for (nodeId in allNodes) {
+                    nodeColors[nodeId] = allNodes[nodeId].color;
+                  }
+                  allEdges = edges.get({ returnType: "Object" });
+                  // adding nodes and edges to the graph
+                  data = {nodes: nodes, edges: edges};
+
+                  var options = {"nodes": {"shape": "dot", "scaling": {"min": 10, "max": 50}, "font": {"size": 14}}, "edges": {"color": {"color": "#888888", "highlight": "#DC143C", "hover": "#666666", "inherit": false}, "smooth": {"type": "continuous"}, "arrows": {"to": {"enabled": false, "scaleFactor": 1}}}, "physics": {"enabled": false, "barnesHut": {"gravitationalConstant": -80000, "centralGravity": 0.3, "springLength": 200, "springConstant": 0.05, "damping": 0.09}, "stabilization": {"enabled": true, "iterations": 1000, "updateInterval": 100}}, "layout": {"hierarchical": {"enabled": true, "direction": "UD", "sortMethod": "directed", "levelSeparation": 150, "nodeSpacing": 120}}, "interaction": {"hover": true, "tooltipDelay": 300, "navigationButtons": true, "keyboard": true, "dragNodes": true, "dragView": true, "zoomView": true, "selectable": true}, "tooltip": {"delay": 300, "fontColor": "black", "fontSize": 14, "fontFace": "verdana", "color": {"border": "#666", "background": "#fff"}}};
+
+                  
+
+
+                  
+
+                  network = new vis.Network(container, data, options);
+
+                  
+
+                  
+
+                  
+
+
+                  
+
+                  return network;
+
+              }
+              drawGraph();
+        </script>
+    
+                <script type="text/javascript">
+                // Data structures from Python
+                var parentChildMap = {"Sex:F": ["MainGroup:HSP-SPG"], "Sex:M": ["MainGroup:Dystonia", "MainGroup:HSP-SPG", "MainGroup:Parkinson", "MainGroup:Wildtype"], "Sex:Sex:None": ["MainGroup:Parkinson", "MainGroup:Trauma", "MainGroup:Wildtype"], "MainGroup:Dystonia": ["Subtype-MolecularSubtype:DYT1-GAG3", "Subtype-MolecularSubtype:DYT1-KI"], "MainGroup:HSP-SPG": ["Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], "MainGroup:Parkinson": ["Subtype-MolecularSubtype:A53T"], "MainGroup:Trauma": ["Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], "MainGroup:Wildtype": ["Subtype-MolecularSubtype:EV", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"]};
+                var levelNodes = {"0": ["Sex:Sex:None", "Sex:M", "Sex:F"], "1": ["MainGroup:HSP-SPG", "MainGroup:Dystonia", "MainGroup:Parkinson", "MainGroup:Wildtype", "MainGroup:Trauma"], "2": ["Subtype-MolecularSubtype:DYT1-GAG3", "Subtype-MolecularSubtype:DYT1-KI", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None", "Subtype-MolecularSubtype:A53T", "Subtype-MolecularSubtype:EV"]};
+                var nodeInfo = {"Sex:Sex:None": {"level": 0, "count": 113, "name": "Sex:None", "column": "Sex"}, "Sex:M": {"level": 0, "count": 36, "name": "M", "column": "Sex"}, "Sex:F": {"level": 0, "count": 3, "name": "F", "column": "Sex"}, "MainGroup:HSP-SPG": {"level": 1, "count": 7, "name": "HSP-SPG", "column": "MainGroup"}, "MainGroup:Dystonia": {"level": 1, "count": 13, "name": "Dystonia", "column": "MainGroup"}, "MainGroup:Parkinson": {"level": 1, "count": 41, "name": "Parkinson", "column": "MainGroup"}, "MainGroup:Wildtype": {"level": 1, "count": 32, "name": "Wildtype", "column": "MainGroup"}, "MainGroup:Trauma": {"level": 1, "count": 59, "name": "Trauma", "column": "MainGroup"}, "Subtype-MolecularSubtype:DYT1-GAG3": {"level": 2, "count": 10, "name": "DYT1-GAG3", "column": "Subtype-MolecularSubtype"}, "Subtype-MolecularSubtype:DYT1-KI": {"level": 2, "count": 3, "name": "DYT1-KI", "column": "Subtype-MolecularSubtype"}, "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None": {"level": 2, "count": 73, "name": "Subtype-MolecularSubtype:None", "column": "Subtype-MolecularSubtype"}, "Subtype-MolecularSubtype:A53T": {"level": 2, "count": 41, "name": "A53T", "column": "Subtype-MolecularSubtype"}, "Subtype-MolecularSubtype:EV": {"level": 2, "count": 25, "name": "EV", "column": "Subtype-MolecularSubtype"}};
+                var edgeFlows = {"Sex:F->MainGroup:HSP-SPG": 3, "Sex:M->MainGroup:Dystonia": 13, "Sex:M->MainGroup:HSP-SPG": 4, "Sex:M->MainGroup:Parkinson": 7, "Sex:M->MainGroup:Wildtype": 12, "Sex:Sex:None->MainGroup:Parkinson": 34, "Sex:Sex:None->MainGroup:Trauma": 59, "Sex:Sex:None->MainGroup:Wildtype": 20, "MainGroup:Dystonia->Subtype-MolecularSubtype:DYT1-GAG3": 10, "MainGroup:Dystonia->Subtype-MolecularSubtype:DYT1-KI": 3, "MainGroup:HSP-SPG->Subtype-MolecularSubtype:Subtype-MolecularSubtype:None": 7, "MainGroup:Parkinson->Subtype-MolecularSubtype:A53T": 41, "MainGroup:Trauma->Subtype-MolecularSubtype:Subtype-MolecularSubtype:None": 59, "MainGroup:Wildtype->Subtype-MolecularSubtype:EV": 25, "MainGroup:Wildtype->Subtype-MolecularSubtype:Subtype-MolecularSubtype:None": 7};
+                var flowData = {"paths": [["Sex:M", "MainGroup:Dystonia", "Subtype-MolecularSubtype:DYT1-GAG3"], ["Sex:M", "MainGroup:Dystonia", "Subtype-MolecularSubtype:DYT1-GAG3"], ["Sex:M", "MainGroup:Dystonia", "Subtype-MolecularSubtype:DYT1-GAG3"], ["Sex:M", "MainGroup:Dystonia", "Subtype-MolecularSubtype:DYT1-GAG3"], ["Sex:M", "MainGroup:Dystonia", "Subtype-MolecularSubtype:DYT1-GAG3"], ["Sex:M", "MainGroup:Dystonia", "Subtype-MolecularSubtype:DYT1-GAG3"], ["Sex:M", "MainGroup:Dystonia", "Subtype-MolecularSubtype:DYT1-GAG3"], ["Sex:M", "MainGroup:Dystonia", "Subtype-MolecularSubtype:DYT1-GAG3"], ["Sex:M", "MainGroup:Dystonia", "Subtype-MolecularSubtype:DYT1-GAG3"], ["Sex:M", "MainGroup:Dystonia", "Subtype-MolecularSubtype:DYT1-GAG3"], ["Sex:M", "MainGroup:Dystonia", "Subtype-MolecularSubtype:DYT1-KI"], ["Sex:M", "MainGroup:Dystonia", "Subtype-MolecularSubtype:DYT1-KI"], ["Sex:M", "MainGroup:Dystonia", "Subtype-MolecularSubtype:DYT1-KI"], ["Sex:F", "MainGroup:HSP-SPG", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:F", "MainGroup:HSP-SPG", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:M", "MainGroup:HSP-SPG", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:M", "MainGroup:HSP-SPG", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:M", "MainGroup:HSP-SPG", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:F", "MainGroup:HSP-SPG", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:M", "MainGroup:HSP-SPG", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Parkinson", "Subtype-MolecularSubtype:A53T"], ["Sex:Sex:None", "MainGroup:Parkinson", "Subtype-MolecularSubtype:A53T"], ["Sex:Sex:None", "MainGroup:Parkinson", "Subtype-MolecularSubtype:A53T"], ["Sex:Sex:None", "MainGroup:Parkinson", "Subtype-MolecularSubtype:A53T"], ["Sex:Sex:None", "MainGroup:Parkinson", "Subtype-MolecularSubtype:A53T"], ["Sex:Sex:None", "MainGroup:Parkinson", "Subtype-MolecularSubtype:A53T"], ["Sex:Sex:None", "MainGroup:Parkinson", "Subtype-MolecularSubtype:A53T"], ["Sex:Sex:None", "MainGroup:Parkinson", "Subtype-MolecularSubtype:A53T"], ["Sex:Sex:None", "MainGroup:Parkinson", "Subtype-MolecularSubtype:A53T"], ["Sex:Sex:None", "MainGroup:Parkinson", "Subtype-MolecularSubtype:A53T"], ["Sex:M", "MainGroup:Parkinson", "Subtype-MolecularSubtype:A53T"], ["Sex:Sex:None", "MainGroup:Parkinson", "Subtype-MolecularSubtype:A53T"], ["Sex:Sex:None", "MainGroup:Parkinson", "Subtype-MolecularSubtype:A53T"], ["Sex:Sex:None", "MainGroup:Parkinson", "Subtype-MolecularSubtype:A53T"], ["Sex:Sex:None", "MainGroup:Parkinson", "Subtype-MolecularSubtype:A53T"], ["Sex:Sex:None", "MainGroup:Parkinson", "Subtype-MolecularSubtype:A53T"], ["Sex:Sex:None", "MainGroup:Parkinson", "Subtype-MolecularSubtype:A53T"], ["Sex:Sex:None", "MainGroup:Parkinson", "Subtype-MolecularSubtype:A53T"], ["Sex:Sex:None", "MainGroup:Parkinson", "Subtype-MolecularSubtype:A53T"], ["Sex:Sex:None", "MainGroup:Parkinson", "Subtype-MolecularSubtype:A53T"], ["Sex:Sex:None", "MainGroup:Parkinson", "Subtype-MolecularSubtype:A53T"], ["Sex:Sex:None", "MainGroup:Parkinson", "Subtype-MolecularSubtype:A53T"], ["Sex:Sex:None", "MainGroup:Parkinson", "Subtype-MolecularSubtype:A53T"], ["Sex:Sex:None", "MainGroup:Parkinson", "Subtype-MolecularSubtype:A53T"], ["Sex:Sex:None", "MainGroup:Parkinson", "Subtype-MolecularSubtype:A53T"], ["Sex:Sex:None", "MainGroup:Parkinson", "Subtype-MolecularSubtype:A53T"], ["Sex:Sex:None", "MainGroup:Parkinson", "Subtype-MolecularSubtype:A53T"], ["Sex:Sex:None", "MainGroup:Parkinson", "Subtype-MolecularSubtype:A53T"], ["Sex:Sex:None", "MainGroup:Parkinson", "Subtype-MolecularSubtype:A53T"], ["Sex:Sex:None", "MainGroup:Parkinson", "Subtype-MolecularSubtype:A53T"], ["Sex:Sex:None", "MainGroup:Parkinson", "Subtype-MolecularSubtype:A53T"], ["Sex:Sex:None", "MainGroup:Parkinson", "Subtype-MolecularSubtype:A53T"], ["Sex:Sex:None", "MainGroup:Parkinson", "Subtype-MolecularSubtype:A53T"], ["Sex:Sex:None", "MainGroup:Parkinson", "Subtype-MolecularSubtype:A53T"], ["Sex:Sex:None", "MainGroup:Parkinson", "Subtype-MolecularSubtype:A53T"], ["Sex:M", "MainGroup:Parkinson", "Subtype-MolecularSubtype:A53T"], ["Sex:M", "MainGroup:Parkinson", "Subtype-MolecularSubtype:A53T"], ["Sex:M", "MainGroup:Parkinson", "Subtype-MolecularSubtype:A53T"], ["Sex:M", "MainGroup:Parkinson", "Subtype-MolecularSubtype:A53T"], ["Sex:M", "MainGroup:Parkinson", "Subtype-MolecularSubtype:A53T"], ["Sex:M", "MainGroup:Parkinson", "Subtype-MolecularSubtype:A53T"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Trauma", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:Sex:None", "MainGroup:Wildtype", "Subtype-MolecularSubtype:EV"], ["Sex:Sex:None", "MainGroup:Wildtype", "Subtype-MolecularSubtype:EV"], ["Sex:Sex:None", "MainGroup:Wildtype", "Subtype-MolecularSubtype:EV"], ["Sex:Sex:None", "MainGroup:Wildtype", "Subtype-MolecularSubtype:EV"], ["Sex:Sex:None", "MainGroup:Wildtype", "Subtype-MolecularSubtype:EV"], ["Sex:Sex:None", "MainGroup:Wildtype", "Subtype-MolecularSubtype:EV"], ["Sex:Sex:None", "MainGroup:Wildtype", "Subtype-MolecularSubtype:EV"], ["Sex:Sex:None", "MainGroup:Wildtype", "Subtype-MolecularSubtype:EV"], ["Sex:Sex:None", "MainGroup:Wildtype", "Subtype-MolecularSubtype:EV"], ["Sex:Sex:None", "MainGroup:Wildtype", "Subtype-MolecularSubtype:EV"], ["Sex:Sex:None", "MainGroup:Wildtype", "Subtype-MolecularSubtype:EV"], ["Sex:Sex:None", "MainGroup:Wildtype", "Subtype-MolecularSubtype:EV"], ["Sex:Sex:None", "MainGroup:Wildtype", "Subtype-MolecularSubtype:EV"], ["Sex:Sex:None", "MainGroup:Wildtype", "Subtype-MolecularSubtype:EV"], ["Sex:Sex:None", "MainGroup:Wildtype", "Subtype-MolecularSubtype:EV"], ["Sex:Sex:None", "MainGroup:Wildtype", "Subtype-MolecularSubtype:EV"], ["Sex:Sex:None", "MainGroup:Wildtype", "Subtype-MolecularSubtype:EV"], ["Sex:Sex:None", "MainGroup:Wildtype", "Subtype-MolecularSubtype:EV"], ["Sex:Sex:None", "MainGroup:Wildtype", "Subtype-MolecularSubtype:EV"], ["Sex:Sex:None", "MainGroup:Wildtype", "Subtype-MolecularSubtype:EV"], ["Sex:M", "MainGroup:Wildtype", "Subtype-MolecularSubtype:EV"], ["Sex:M", "MainGroup:Wildtype", "Subtype-MolecularSubtype:EV"], ["Sex:M", "MainGroup:Wildtype", "Subtype-MolecularSubtype:EV"], ["Sex:M", "MainGroup:Wildtype", "Subtype-MolecularSubtype:EV"], ["Sex:M", "MainGroup:Wildtype", "Subtype-MolecularSubtype:EV"], ["Sex:M", "MainGroup:Wildtype", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:M", "MainGroup:Wildtype", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:M", "MainGroup:Wildtype", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:M", "MainGroup:Wildtype", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:M", "MainGroup:Wildtype", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:M", "MainGroup:Wildtype", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"], ["Sex:M", "MainGroup:Wildtype", "Subtype-MolecularSubtype:Subtype-MolecularSubtype:None"]]};
+                var originalPhysicsEnabled = false;
+
+                // Store original data
+                var originalNodeColors = {};
+                var originalNodeLabels = {};
+                var originalNodeSizes = {};
+                var originalNodeCounts = {};
+                var originalNodeTitles = {};  // workaround
+                var originalEdgeWidths = {};
+                var originalEdgeTitles = {};
+                var originalEdgeFlows = {};
+                var originalEdgeColors = {};  // Store original edge colors
+
+                // Track focus state
+                var focusMode = false;
+                var focusedNode = null;
+
+                // Track if handlers are already registered
+                var handlersRegistered = false;
+
+                // Calculate filtered flows through a specific node
+                function calculateFilteredFlows(focusNodeId) {
+                    var filteredPaths = [];
+                    var focusLevel = nodeInfo[focusNodeId].level;
+
+                    // Filter paths that go through the focused node
+                    flowData.paths.forEach(function(path) {
+                        if (path[focusLevel] === focusNodeId) {
+                            filteredPaths.push(path);
+                        }
+                    });
+
+                    // Calculate new counts for all descendants
+                    var newNodeCounts = {};
+                    var newEdgeFlows = {};
+
+                    // Initialize counts
+                    Object.keys(nodeInfo).forEach(function(nodeId) {
+                        newNodeCounts[nodeId] = 0;
+                    });
+
+                    // Count occurrences in filtered paths
+                    filteredPaths.forEach(function(path) {
+                        // Count nodes
+                        path.forEach(function(nodeId, idx) {
+                            if (idx >= focusLevel) {  // Only count from focus level onwards
+                                newNodeCounts[nodeId] = (newNodeCounts[nodeId] || 0) + 1;
+                            }
+                        });
+
+                        // Count edges
+                        for (var i = focusLevel; i < path.length - 1; i++) {
+                            var edgeKey = path[i] + "->" + path[i + 1];
+                            newEdgeFlows[edgeKey] = (newEdgeFlows[edgeKey] || 0) + 1;
+                        }
+                    });
+
+                    return {
+                        nodeCounts: newNodeCounts,
+                        edgeFlows: newEdgeFlows,
+                        totalFilteredPaths: filteredPaths.length
+                    };
+                }
+
+                // Find all descendants of a node (recursive)
+                function getAllDescendants(nodeId) {
+                    var descendants = [];
+
+                    function traverse(id) {
+                        if (parentChildMap[id]) {
+                            parentChildMap[id].forEach(function(childId) {
+                                descendants.push(childId);
+                                traverse(childId);
+                            });
+                        }
+                    }
+
+                    traverse(nodeId);
+                    return descendants;
+                }
+
+                // Initialize function to store original data
+                function initializeOriginalData() {
+                    console.log("Storing original values");
+
+                    // Store original node data
+                    var allNodes = nodes.get();
+                    allNodes.forEach(function(node) {
+                        originalNodeColors[node.id] = node.color;
+                        originalNodeLabels[node.id] = node.label;
+                        originalNodeSizes[node.id] = node.size;
+                        originalNodeCounts[node.id] = node.count;
+                        originalNodeTitles[node.id] = node.title || "";  // workaround :: also consider adding || ""
+                    });
+
+                    // Store original edge data
+                    var allEdges = edges.get();
+                    allEdges.forEach(function(edge) {
+                        originalEdgeWidths[edge.id] = edge.width;
+                        originalEdgeTitles[edge.id] = edge.title || "";
+                        originalEdgeFlows[edge.id] = edge.flow || edge.value || 0;
+                        originalEdgeColors[edge.id] = edge.color || "#848484";  // Store original edge color
+                    });
+                }
+
+                // Wait a bit for network to be fully loaded, then initialize
+                setTimeout(function() {
+                    if (!handlersRegistered) {
+                        initializeOriginalData();
+
+                        // Add click handler directly (not waiting for stabilization)
+                        network.on("click", function(params) {
+                            if (params.nodes.length > 0) {
+                                var clickedNodeId = params.nodes[0];
+                                console.log("Node clicked:", clickedNodeId);
+                                // Small delay to ensure proper event handling
+                                setTimeout(function() {
+                                    handleNodeClick(clickedNodeId);
+                                }, 50);
+                            }
+                        });
+
+                        // Reset view button handler
+                        var resetButton = document.getElementById('reset-view');
+                        if (resetButton) {
+                            resetButton.addEventListener('click', function() {
+                                console.log("Reset button clicked");
+                                resetView();
+                            });
+                        }
+
+                        handlersRegistered = true;
+                        console.log("Event handlers registered successfully");
+                    }
+                }, 1000);  // Give network 1 second to fully initialize
+
+                // Reset view function
+                function resetView() {
+                    if (!focusMode) return;
+                    console.log("Resetting view");
+
+                    // Reset all nodes
+                    var allNodes = nodes.get();
+                    var nodeUpdates = [];
+
+                    allNodes.forEach(function(node) {
+                        var originalCount = originalNodeCounts[node.id];
+                        var levelTotal = 0;
+
+                        // Recalculate level total for percentage
+                        var nodeLevel = nodeInfo[node.id].level;
+                        Object.keys(nodeInfo).forEach(function(id) {
+                            if (nodeInfo[id].level === nodeLevel) {
+                                levelTotal += originalNodeCounts[id];
+                            }
+                        });
+
+                        var levelPct = (originalCount / levelTotal) * 100;
+
+                        nodeUpdates.push({
+                            id: node.id,
+                            color: originalNodeColors[node.id],
+                            label: originalNodeLabels[node.id],
+                            size: originalNodeSizes[node.id],
+                            opacity: 1.0,
+                            font: { color: '#000000', size: 14 },
+                            count: originalCount,
+                            title: originalNodeTitles[node.id]
+                            // title: nodeInfo[node.id].name + "\nCount: " + originalCount + "\nLevel %: " + levelPct.toFixed(1) + "%\nLevel: " + (nodeLevel + 1)
+                        });
+                    });
+
+                    // Apply updates in batch
+                    nodes.update(nodeUpdates);
+
+                    // Reset all edges
+                    var allEdges = edges.get();
+                    var edgeUpdates = [];
+
+                    allEdges.forEach(function(edge) {
+                        edgeUpdates.push({
+                            id: edge.id,
+                            width: originalEdgeWidths[edge.id],
+                            opacity: 1.0,
+                            color: originalEdgeColors[edge.id],  // Reset to original color
+                            label: "",
+                            title: originalEdgeTitles[edge.id],
+                            font: { color: '#000000', size: 10 },
+                            flow: originalEdgeFlows[edge.id],
+                            arrows: { to: { enabled: false, scaleFactor: 1.0 } }
+                        });
+                    });
+
+                    // Apply updates in batch
+                    edges.update(edgeUpdates);
+
+                    // Force visual update regardless of physics mode
+                    if (originalPhysicsEnabled) {
+                        // With physics: briefly toggle to force update
+                        network.setOptions({ physics: { enabled: false } });
+                        setTimeout(function() {
+                            network.setOptions({ physics: { enabled: true } });
+                        }, 50);
+                    } else {
+                        // Without physics: just force redraw
+                        network.redraw();
+                    }
+
+                    focusMode = false;
+                    focusedNode = null;
+                }
+
+                // Scale a value between min and max
+                function scaleValue(value, min, max, targetMin, targetMax) {
+                    if (min === max) return (targetMin + targetMax) / 2;
+                    return targetMin + (targetMax - targetMin) * (Math.log1p(value) - Math.log1p(min)) / (Math.log1p(max) - Math.log1p(min));
+                }
+
+                // Handle node click event
+                function handleNodeClick(nodeId) {
+                    // If clicking the same node that's already focused, reset view
+                    if (focusMode && focusedNode === nodeId) {
+                        resetView();
+                        return;
+                    }
+
+                    // Set focus mode
+                    focusMode = true;
+                    focusedNode = nodeId;
+
+                    // Get the clicked node data
+                    var clickedNode = nodes.get(nodeId);
+                    var clickedNodeLevel = clickedNode.level;
+
+                    // Calculate filtered flows
+                    var filteredData = calculateFilteredFlows(nodeId);
+                    var newNodeCounts = filteredData.nodeCounts;
+                    var newEdgeFlows = filteredData.edgeFlows;
+
+                    // Get all descendants of the clicked node
+                    var descendants = getAllDescendants(nodeId);
+                    descendants.push(nodeId); // Include the clicked node itself
+
+                    // Create set of nodes with actual filtered flow for quick lookup
+                    var nodesWithFlow = new Set();
+                    descendants.forEach(function(id) {
+                        if (newNodeCounts[id] > 0) {
+                            nodesWithFlow.add(id);
+                        }
+                    });
+
+                    // Calculate min/max for scaling
+                    var descendantCounts = [];
+                    descendants.forEach(function(id) {
+                        if (newNodeCounts[id] > 0) {
+                            descendantCounts.push(newNodeCounts[id]);
+                        }
+                    });
+
+                    var minDescCount = Math.min.apply(null, descendantCounts) || 1;
+                    var maxDescCount = Math.max.apply(null, descendantCounts) || 1;
+
+                    // Calculate level totals for the filtered data
+                    var filteredLevelTotals = {};
+                    descendants.forEach(function(id) {
+                        var level = nodeInfo[id].level;
+                        filteredLevelTotals[level] = (filteredLevelTotals[level] || 0) + newNodeCounts[id];
+                    });
+
+                    // Get all nodes at the clicked level
+                    var sameLevel = levelNodes[clickedNodeLevel];
+
+                    // Get ancestors (all nodes at levels < clickedNodeLevel)
+                    var ancestors = [];
+                    for (var i = 0; i < clickedNodeLevel; i++) {
+                        if (levelNodes[i]) {
+                            ancestors = ancestors.concat(levelNodes[i]);
+                        }
+                    }
+
+                    // Get non-descendant nodes at levels > clickedNodeLevel
+                    var nonDescendantLowerLevels = [];
+                    for (var i = clickedNodeLevel + 1; i < Object.keys(levelNodes).length; i++) {
+                        if (levelNodes[i]) {
+                            levelNodes[i].forEach(function(id) {
+                                if (!descendants.includes(id)) {
+                                    nonDescendantLowerLevels.push(id);
+                                }
+                            });
+                        }
+                    }
+
+                    // Prepare batch updates for nodes
+                    var nodeUpdates = [];
+
+                    // Process nodes based on their relationship to the clicked node
+                    nodes.forEach(function(node) {
+                        var nodeId = node.id;
+                        var nodeLevel = node.level;
+                        var nodeName = nodeInfo[nodeId].name;
+                        var originalCount = originalNodeCounts[nodeId];
+                        var newCount = newNodeCounts[nodeId] || 0;
+                        var rootNodeCount = originalNodeCounts[focusedNode];
+
+                        // 1. CLICKED NODE: Show original count (all flows through this node)
+                        if (nodeId === focusedNode) {
+                            // var levelPct = (originalCount / filteredLevelTotals[nodeLevel]) * 100;  // check that this should always show 100%
+                            nodeUpdates.push({
+                                id: nodeId,
+                                color: { background: originalNodeColors[nodeId], border: '#000000' },
+                                label: nodeName + "\n" + originalCount,
+                                font: { color: '#000000', size: 16, bold: true },
+                                opacity: 1.0,
+                                size: originalNodeSizes[nodeId],
+                                title: nodeName + "\nTotal Count: " + originalCount + "\nFiltered view shows 100% of this node"
+                            });
+                        }
+                        // 2. OTHER NODES AT SAME LEVEL: Dimmed with original counts
+                        else if (sameLevel.includes(nodeId) && nodeLevel === clickedNodeLevel) {
+                            nodeUpdates.push({
+                                id: nodeId,
+                                color: originalNodeColors[nodeId],
+                                label: nodeName + "\n" + originalCount,
+                                font: { color: '#666666', size: 12 },
+                                opacity: 0.2,
+                                size: originalNodeSizes[nodeId]
+                            });
+                        }
+                        // 3. ANCESTORS: Only show category names, dimmed
+                        else if (ancestors.includes(nodeId)) {
+                            nodeUpdates.push({
+                                id: nodeId,
+                                color: originalNodeColors[nodeId],
+                                label: nodeName,
+                                font: { color: '#999999', size: 12 },
+                                opacity: 0.2,
+                                size: originalNodeSizes[nodeId]
+                            });
+                        }
+                        // 4. DESCENDANTS: Show filtered counts and resize
+                        else if (descendants.includes(nodeId) && nodeLevel > clickedNodeLevel) {
+                            if (newCount > 0) {
+                                // Calculate percentage relative to filtered level total
+                                // var filteredLevelPct = (newCount / filteredLevelTotals[nodeLevel]) * 100;
+                                var filteredPct = (newCount / rootNodeCount) * 100;
+                                // Calculate percentage relative to original count
+                                var retentionPct = (newCount / originalCount) * 100;
+
+                                // Resize node based on new count
+                                var newSize = scaleValue(newCount, minDescCount, maxDescCount, 10, 50);
+
+                                nodeUpdates.push({
+                                    id: nodeId,
+                                    color: originalNodeColors[nodeId],
+                                    label: nodeName + "\n" + newCount + " (" + filteredPct.toFixed(1) + "%)",
+                                    font: { color: '#000000', size: 14 },
+                                    opacity: 1.0,
+                                    size: newSize,
+                                    title: nodeName + "\nFiltered Count: " + newCount + " (from originally " + originalCount + ")\n" +
+                                           "Filtered %: " + filteredPct.toFixed(1) + "%\n" +
+                                           "Retention %: " + retentionPct.toFixed(1) + "% of original"
+                                });
+                            } else {
+                                // No flow through this descendant from the clicked node
+                                nodeUpdates.push({
+                                    id: nodeId,
+                                    color: originalNodeColors[nodeId],
+                                    label: "",
+                                    font: { color: '#aaaaaa', size: 1 },
+                                    opacity: 0.2,
+                                    title: originalNodeTitles[nodeId],  // workaround
+                                    size: 5
+                                });
+                            }
+                        }
+                        // 5. NON-DESCENDANTS at lower levels
+                        else if (nonDescendantLowerLevels.includes(nodeId)) {
+                            nodeUpdates.push({
+                                id: nodeId,
+                                color: originalNodeColors[nodeId],
+                                label: "",
+                                font: { color: '#aaaaaa', size: 1 },
+                                opacity: 0.2,
+                                title: originalNodeTitles[nodeId],  // workaround
+                                size: 5
+                            });
+                        }
+                    });
+
+                    // Apply all node updates in a batch
+                    nodes.update(nodeUpdates);
+
+                    // Calculate edge flow ranges for scaling
+                    var activeEdgeFlows = [];
+                    Object.keys(newEdgeFlows).forEach(function(key) {
+                        if (newEdgeFlows[key] > 0) {
+                            activeEdgeFlows.push(newEdgeFlows[key]);
+                        }
+                    });
+
+                    var minEdgeFlow = Math.min.apply(null, activeEdgeFlows) || 1;
+                    var maxEdgeFlow = Math.max.apply(null, activeEdgeFlows) || 1;
+
+                    // Prepare batch updates for edges
+                    var edgeUpdates = [];
+
+                    // Process edges based on their relationship to the clicked node
+                    edges.forEach(function(edge) {
+                        var fromId = edge.from;
+                        var toId = edge.to;
+                        var edgeKey = fromId + "->" + toId;
+                        var newFlow = newEdgeFlows[edgeKey] || 0;
+                        var originalFlow = originalEdgeFlows[edge.id];
+
+                        // Check if this edge is in the descendant path AND both nodes have flow
+                        var isDescendantEdge = descendants.includes(fromId) && 
+                                            descendants.includes(toId) && 
+                                            nodes.get(toId).level > nodes.get(fromId).level &&
+                                            nodesWithFlow.has(fromId) &&
+                                            nodesWithFlow.has(toId);
+
+                        if (isDescendantEdge && newFlow > 0) {
+                            // Calculate new width based on filtered flow
+                            var newWidth = scaleValue(newFlow, minEdgeFlow, maxEdgeFlow, 1, 6);
+
+                            // Calculate percentage of flow
+                            var fromFilteredCount = newNodeCounts[fromId];
+                            var flowPct = (newFlow / fromFilteredCount) * 100;
+                            var retentionPct = (newFlow / originalFlow) * 100;
+
+                            edgeUpdates.push({
+                                id: edge.id,
+                                width: newWidth,
+                                opacity: 1.0,
+                                color: '#DC143C', // override it with a constant color (red) :: originalEdgeColors[edge.id],  // Use original color, not dimmed
+                                label: "",
+                                title: "Filtered Flow: " + newFlow + " (from originally " + originalFlow + ")\n" +
+                                        flowPct.toFixed(1) + "% of immediate source node\n" +
+                                        "Retention %: " + retentionPct.toFixed(1) + "% of original",
+                                font: { color: '#000000', size: 12, bold: true },
+                                flow: newFlow,
+                                arrows: { to: { enabled: false, scaleFactor: 1.5 } }
+                            });
+                        }
+                        // All other edges - dimmed or hidden
+                        else {
+                            edgeUpdates.push({
+                                id: edge.id,
+                                width: originalEdgeWidths[edge.id] * 0.2,
+                                opacity: 0.1,
+                                color: "#cccccc",  // Dimmed color for non-active edges
+                                label: "",
+                                title: originalEdgeTitles[edge.id],
+                                arrows: { to: { enabled: false, scaleFactor: 0.5 } }  
+                                // once set the arrows to true; it was working but ONLY the colors are not changing!
+                                // gotcha! the problem is that there is NO separate control for the edge color... it is overridden by the source nodes border color code!
+                            });
+                        }
+                    });
+
+                    // Apply all edge updates in a batch
+                    edges.update(edgeUpdates);
+
+                    // Force visual update based on physics mode
+                    if (!originalPhysicsEnabled) {
+                        // Without physics: force immediate redraw
+                        network.redraw();
+                    }
+
+                    console.log("Focus view updated. Showing", filteredData.totalFilteredPaths, "paths through", focusedNode);
+                }
+                </script>
+                </body>
+</html>

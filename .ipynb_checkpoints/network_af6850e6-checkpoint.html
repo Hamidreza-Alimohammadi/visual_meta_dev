@@ -1,0 +1,160 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hierarchical Network</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.css">
+    <style>
+        #mynetwork {
+            width: 100%;
+            height: 800px;
+            border: 1px solid lightgray;
+        }
+        .legend {
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .legend h3 {
+            margin-top: 0;
+        }
+        .legend ul {
+            list-style-type: none;
+            padding-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h2>Hierarchical Network Visualization</h2>
+
+    <div class="legend">
+        <h3>Hierarchy Levels</h3>
+        <ul>
+            
+                    <li style="margin:5px 0">
+                        <span style="display:inline-block;width:15px;height:15px;background-color:#440154;border-radius:50%;margin-right:5px;"></span>
+                        <b>Level 1:</b> Sex
+                    </li>
+                    
+                    <li style="margin:5px 0">
+                        <span style="display:inline-block;width:15px;height:15px;background-color:#21918c;border-radius:50%;margin-right:5px;"></span>
+                        <b>Level 2:</b> MainGroup
+                    </li>
+                    
+                    <li style="margin:5px 0">
+                        <span style="display:inline-block;width:15px;height:15px;background-color:#fde725;border-radius:50%;margin-right:5px;"></span>
+                        <b>Level 3:</b> Subtype-MolecularSubtype
+                    </li>
+                    
+        </ul>
+        <p><b>Node size</b> represents record count</p>
+        <p><b>Edge width</b> represents connection strength</p>
+        <p><b>Hover</b> over elements for details</p>
+    </div>
+
+    <div id="mynetwork"></div>
+
+    <script>
+        // Create nodes and edges
+        var nodes = new vis.DataSet([{"id": "Sex:M", "label": "M", "title": "<div style='max-width:300px;'><b>M</b><hr>Count: 1960<br>Level: 1</div>", "group": 0, "value": 1960, "level": 0, "color": "#440154"}, {"id": "Sex:Unknown Sex", "label": "Unknown Sex", "title": "<div style='max-width:300px;'><b>Unknown Sex</b><hr>Count: 382<br>Level: 1</div>", "group": 0, "value": 382, "level": 0, "color": "#440154"}, {"id": "Sex:F", "label": "F", "title": "<div style='max-width:300px;'><b>F</b><hr>Count: 268<br>Level: 1</div>", "group": 0, "value": 268, "level": 0, "color": "#440154"}, {"id": "Sex:X", "label": "X", "title": "<div style='max-width:300px;'><b>X</b><hr>Count: 3<br>Level: 1</div>", "group": 0, "value": 3, "level": 0, "color": "#440154"}, {"id": "MainGroup:Dystonia", "label": "Dystonia", "title": "<div style='max-width:300px;'><b>Dystonia</b><hr>Count: 45<br>Level: 2</div>", "group": 1, "value": 45, "level": 1, "color": "#21918c"}, {"id": "MainGroup:HSP-SPG", "label": "HSP-SPG", "title": "<div style='max-width:300px;'><b>HSP-SPG</b><hr>Count: 102<br>Level: 2</div>", "group": 1, "value": 102, "level": 1, "color": "#21918c"}, {"id": "MainGroup:Parkinson", "label": "Parkinson", "title": "<div style='max-width:300px;'><b>Parkinson</b><hr>Count: 35<br>Level: 2</div>", "group": 1, "value": 35, "level": 1, "color": "#21918c"}, {"id": "MainGroup:Wildtype", "label": "Wildtype", "title": "<div style='max-width:300px;'><b>Wildtype</b><hr>Count: 86<br>Level: 2</div>", "group": 1, "value": 86, "level": 1, "color": "#21918c"}, {"id": "MainGroup:Trauma", "label": "Trauma", "title": "<div style='max-width:300px;'><b>Trauma</b><hr>Count: 179<br>Level: 2</div>", "group": 1, "value": 179, "level": 1, "color": "#21918c"}, {"id": "Subtype-MolecularSubtype:DYT1-GAG3", "label": "DYT1-GAG3", "title": "<div style='max-width:300px;'><b>DYT1-GAG3</b><hr>Count: 364<br>Level: 3</div>", "group": 2, "value": 364, "level": 2, "color": "#fde725"}, {"id": "Subtype-MolecularSubtype:DYT1-KI", "label": "DYT1-KI", "title": "<div style='max-width:300px;'><b>DYT1-KI</b><hr>Count: 247<br>Level: 3</div>", "group": 2, "value": 247, "level": 2, "color": "#fde725"}, {"id": "Subtype-MolecularSubtype:DYT1-Tor1a", "label": "DYT1-Tor1a", "title": "<div style='max-width:300px;'><b>DYT1-Tor1a</b><hr>Count: 56<br>Level: 3</div>", "group": 2, "value": 56, "level": 2, "color": "#fde725"}, {"id": "Subtype-MolecularSubtype:DYT25", "label": "DYT25", "title": "<div style='max-width:300px;'><b>DYT25</b><hr>Count: 36<br>Level: 3</div>", "group": 2, "value": 36, "level": 2, "color": "#fde725"}, {"id": "Subtype-MolecularSubtype:DYT6", "label": "DYT6", "title": "<div style='max-width:300px;'><b>DYT6</b><hr>Count: 43<br>Level: 3</div>", "group": 2, "value": 43, "level": 2, "color": "#fde725"}, {"id": "Subtype-MolecularSubtype:Unknown Subtype-MolecularSubtype", "label": "Unknown Subtype-Mole...", "title": "<div style='max-width:300px;'><b>Unknown Subtype-MolecularSubtype</b><hr>Count: 216<br>Level: 3</div>", "group": 2, "value": 216, "level": 2, "color": "#fde725"}, {"id": "Subtype-MolecularSubtype:A53T", "label": "A53T", "title": "<div style='max-width:300px;'><b>A53T</b><hr>Count: 226<br>Level: 3</div>", "group": 2, "value": 226, "level": 2, "color": "#fde725"}, {"id": "Subtype-MolecularSubtype:A53T-A30P", "label": "A53T-A30P", "title": "<div style='max-width:300px;'><b>A53T-A30P</b><hr>Count: 70<br>Level: 3</div>", "group": 2, "value": 70, "level": 2, "color": "#fde725"}, {"id": "Subtype-MolecularSubtype:DYT12Mimickry", "label": "DYT12Mimickry", "title": "<div style='max-width:300px;'><b>DYT12Mimickry</b><hr>Count: 273<br>Level: 3</div>", "group": 2, "value": 273, "level": 2, "color": "#fde725"}, {"id": "Subtype-MolecularSubtype:EV", "label": "EV", "title": "<div style='max-width:300px;'><b>EV</b><hr>Count: 131<br>Level: 3</div>", "group": 2, "value": 131, "level": 2, "color": "#fde725"}]);
+        var edges = new vis.DataSet([{"from": "Sex:M", "to": "MainGroup:Dystonia", "value": 698, "title": "Records: 698 (26.7%)", "width": 2.7806122448979593}, {"from": "Sex:M", "to": "MainGroup:HSP-SPG", "value": 114, "title": "Records: 114 (4.4%)", "width": 1.2908163265306123}, {"from": "Sex:M", "to": "MainGroup:Parkinson", "value": 122, "title": "Records: 122 (4.7%)", "width": 1.3112244897959184}, {"from": "Sex:M", "to": "MainGroup:Wildtype", "value": 1026, "title": "Records: 1026 (39.3%)", "width": 3.61734693877551}, {"from": "Sex:Unknown Sex", "to": "MainGroup:Parkinson", "value": 139, "title": "Records: 139 (5.3%)", "width": 1.3545918367346939}, {"from": "Sex:Unknown Sex", "to": "MainGroup:Trauma", "value": 179, "title": "Records: 179 (6.9%)", "width": 1.4566326530612246}, {"from": "Sex:Unknown Sex", "to": "MainGroup:Wildtype", "value": 64, "title": "Records: 64 (2.4%)", "width": 1.163265306122449}, {"from": "Sex:F", "to": "MainGroup:Dystonia", "value": 45, "title": "Records: 45 (1.7%)", "width": 1.114795918367347}, {"from": "Sex:F", "to": "MainGroup:HSP-SPG", "value": 102, "title": "Records: 102 (3.9%)", "width": 1.260204081632653}, {"from": "Sex:F", "to": "MainGroup:Parkinson", "value": 35, "title": "Records: 35 (1.3%)", "width": 1.0892857142857142}, {"from": "Sex:F", "to": "MainGroup:Wildtype", "value": 86, "title": "Records: 86 (3.3%)", "width": 1.219387755102041}, {"from": "Sex:X", "to": "MainGroup:Dystonia", "value": 3, "title": "Records: 3 (0.1%)", "width": 1.0076530612244898}, {"from": "MainGroup:Dystonia", "to": "Subtype-MolecularSubtype:DYT1-GAG3", "value": 364, "title": "Records: 364 (13.9%)", "width": 1.9285714285714286}, {"from": "MainGroup:Dystonia", "to": "Subtype-MolecularSubtype:DYT1-KI", "value": 247, "title": "Records: 247 (9.5%)", "width": 1.6301020408163265}, {"from": "MainGroup:Dystonia", "to": "Subtype-MolecularSubtype:DYT1-Tor1a", "value": 56, "title": "Records: 56 (2.1%)", "width": 1.1428571428571428}, {"from": "MainGroup:Dystonia", "to": "Subtype-MolecularSubtype:DYT25", "value": 36, "title": "Records: 36 (1.4%)", "width": 1.0918367346938775}, {"from": "MainGroup:Dystonia", "to": "Subtype-MolecularSubtype:DYT6", "value": 43, "title": "Records: 43 (1.6%)", "width": 1.1096938775510203}, {"from": "MainGroup:HSP-SPG", "to": "Subtype-MolecularSubtype:Unknown Subtype-MolecularSubtype", "value": 216, "title": "Records: 216 (8.3%)", "width": 1.5510204081632653}, {"from": "MainGroup:Parkinson", "to": "Subtype-MolecularSubtype:A53T", "value": 226, "title": "Records: 226 (8.6%)", "width": 1.5765306122448979}, {"from": "MainGroup:Parkinson", "to": "Subtype-MolecularSubtype:A53T-A30P", "value": 70, "title": "Records: 70 (2.7%)", "width": 1.1785714285714286}, {"from": "MainGroup:Wildtype", "to": "Subtype-MolecularSubtype:DYT12Mimickry", "value": 273, "title": "Records: 273 (10.4%)", "width": 1.6964285714285714}, {"from": "MainGroup:Wildtype", "to": "Subtype-MolecularSubtype:EV", "value": 131, "title": "Records: 131 (5.0%)", "width": 1.3341836734693877}, {"from": "MainGroup:Wildtype", "to": "Subtype-MolecularSubtype:Unknown Subtype-MolecularSubtype", "value": 772, "title": "Records: 772 (29.5%)", "width": 2.9693877551020407}, {"from": "MainGroup:Trauma", "to": "Subtype-MolecularSubtype:Unknown Subtype-MolecularSubtype", "value": 179, "title": "Records: 179 (6.9%)", "width": 1.4566326530612246}]);
+
+        // Create network
+        var container = document.getElementById('mynetwork');
+        var data = {
+            nodes: nodes,
+            edges: edges
+        };
+
+        var options = {
+            nodes: {
+                shape: 'dot',
+                scaling: {
+                    min: 10,
+                    max: 50
+                },
+                font: {
+                    size: 14
+                }
+            },
+            edges: {
+                color: {
+                    inherit: 'from'
+                },
+                smooth: {
+                    type: 'continuous'
+                }
+            },
+            physics: {
+                enabled: true,
+                barnesHut: {
+                    gravitationalConstant: -80000,
+                    centralGravity: 0.3,
+                    springLength: 200,
+                    springConstant: 0.05,
+                    damping: 0.09
+                }
+            },
+            layout: {
+                hierarchical: {
+                    enabled: true,
+                    direction: 'UD',
+                    sortMethod: 'directed',
+                    levelSeparation: 150,
+                    nodeSpacing: 120
+                }
+            },
+            interaction: {
+                navigationButtons: true,
+                keyboard: true,
+                hover: true
+            }
+        };
+
+        var network = new vis.Network(container, data, options);
+
+        // Special layout handling
+        if ('hierarchical' === 'radial' || 'hierarchical' === 'circular') {
+            // Group nodes by level
+            var levels = {};
+            nodes.forEach(function(node) {
+                var level = node.level;
+                if (!levels[level]) {
+                    levels[level] = [];
+                }
+                levels[level].push(node.id);
+            });
+
+            // Position nodes in circles
+            network.once('stabilizationIterationsDone', function() {
+                var nodePositions = {};
+
+                Object.keys(levels).forEach(function(level) {
+                    var nodeIds = levels[level];
+                    var radius = (parseInt(level) + 1) * 150;
+
+                    nodeIds.forEach(function(nodeId, idx) {
+                        var angle = 2 * Math.PI * idx / nodeIds.length;
+                        var x = radius * Math.cos(angle);
+                        var y = radius * Math.sin(angle);
+
+                        nodePositions[nodeId] = {x: x, y: y};
+                    });
+                });
+
+                network.moveTo({positions: nodePositions});
+
+                // Fix nodes for circular layout
+                if ('hierarchical' === 'circular') {
+                    nodes.forEach(function(node) {
+                        nodes.update({id: node.id, fixed: true});
+                    });
+                }
+            });
+        }
+    </script>
+</body>
+</html>
+                    
